@@ -13,14 +13,14 @@ type UserService struct {
 // GetUsers busca la lista de los usuarios
 func (s *UserService) GetUsers() ([]*root.User, error) {
 	users := []*root.User{}
-	rows, err := s.DB.Query("SELECT name FROM users")
+	rows, err := s.DB.Query("SELECT id, name FROM users")
 	if err != nil {
 		return users, err
 	}
 
 	for rows.Next() {
 		user := &root.User{}
-		err = rows.Scan(&user.Name)
+		err = rows.Scan(&user.ID, &user.Name)
 		if err != nil {
 			return users, err
 		}
@@ -33,6 +33,22 @@ func (s *UserService) GetUsers() ([]*root.User, error) {
 
 //GetUser obtiene un user dado un id
 func (s *UserService) GetUser(id int) (*root.User, error) {
+	user := &root.User{}
+	rows, err := s.DB.Query("SELECT id, name FROM users WHERE id = (?)", id)
+	if err != nil {
+		return user, err
+	}
+
+	for rows.Next() {
+		user := &root.User{}
+		err = rows.Scan(&user.ID, &user.Name)
+		if err != nil {
+			return user, err
+		}
+
+		return user, err
+	}
+
 	return nil, nil
 }
 
@@ -44,5 +60,9 @@ func (s *UserService) CreateUser(pUser root.User) error {
 
 //DeleteUser elimina un usuario dado un id
 func (s *UserService) DeleteUser(id int) error {
+	_, err := s.DB.Exec("DELETE FROM users WHERE id = (?)", id)
+	if err != nil {
+		return err
+	}
 	return nil
 }

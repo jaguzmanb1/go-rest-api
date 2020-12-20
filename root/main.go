@@ -1,5 +1,7 @@
 package root
 
+import "net/http"
+
 //User describe el objeto de un usuario
 type User struct {
 	ID   int    `json:"id"`
@@ -12,6 +14,12 @@ type UserService interface {
 	GetUsers() ([]*User, error)
 	CreateUser(User) error
 	DeleteUser(id int) error
+}
+
+//UserResource interfaz para el resource http de un usuario
+type UserResource interface {
+	GetUserRequest(http.ResponseWriter, http.Request)
+	CreateUserResource(http.ResponseWriter, http.Request)
 }
 
 func main() {
