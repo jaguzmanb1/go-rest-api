@@ -19,7 +19,7 @@ func (s *UserService) GetUsers() ([]*root.User, error) {
 	}
 
 	for rows.Next() {
-		var user *root.User
+		user := &root.User{}
 		err = rows.Scan(&user.Name)
 		if err != nil {
 			return users, err
@@ -37,8 +37,9 @@ func (s *UserService) GetUser(id int) (*root.User, error) {
 }
 
 //CreateUser crea un usuario
-func (s *UserService) CreateUser() error {
-	return nil
+func (s *UserService) CreateUser(pUser root.User) error {
+	_, err := s.DB.Exec("INSERT INTO users (name) VALUES (?)", pUser.Name)
+	return err
 }
 
 //DeleteUser elimina un usuario dado un id

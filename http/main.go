@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"rest-api/root"
@@ -38,6 +39,8 @@ func (h *Handler) CreateRoutes() {
 	router := mux.NewRouter().StrictSlash(true)
 	router.Use(middlewareCors)
 	router.HandleFunc("/users", getUsersRequest).Methods("GET")
+	router.HandleFunc("/users", createUserRequest).Methods("POST")
+
 	log.Fatal(http.ListenAndServe(":3000", router))
 
 }
@@ -51,4 +54,16 @@ func getUsersRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(users)
+}
+
+func createUserRequest(w http.ResponseWriter, r *http.Request) {
+	var newUser root.User
+	reqBody, err := ioutil.ReadAll(r.Body)
+
+	if err != nil {
+		fmt.Fprint(w, "Insert a valid user")
+	}
+	json.Unmarshal(reqBody, &newUser)
+	handler.UserService.CreateUser(newUser)
+
 }

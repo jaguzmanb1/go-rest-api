@@ -10,7 +10,7 @@ type User struct {
 type UserService interface {
 	GetUser(id int) (*User, error)
 	GetUsers() ([]*User, error)
-	CreateUser() error
+	CreateUser(User) error
 	DeleteUser(id int) error
 }
 
