@@ -2,33 +2,20 @@ package data
 
 import (
 	"database/sql"
-	"encoding/json"
-	"io"
+	"fmt"
 )
+
+// ErrProductNotFound is an error raised when a product can not be found in the database
+var ErrProductNotFound = fmt.Errorf("Product not found")
 
 // User define la estructura de un usuario para el API
 type User struct {
 	ID   int    `json:"id"`
-	Name string `json:"name"`
-}
-
-// FromJSON devuelve el objeto User como un JSON
-func (u *User) FromJSON(r io.Reader) error {
-	e := json.NewDecoder(r)
-	return e.Decode(u)
+	Name string `json:"name" validate:"required"`
 }
 
 //Users is una colección de User
 type Users []*User
-
-// ToJSON Serializa el contenido de la coleccion a JSON
-// NewEncoder provides better performance than json.Unmarshal as it does not
-// have to buffer the output into an in memory slice of bytes
-// this reduces allocations and the overheads of the service
-func (u *Users) ToJSON(w io.Writer) error {
-	e := json.NewEncoder(w)
-	return e.Encode(u)
-}
 
 //UserService representa una implementación de mysql
 type UserService struct {
@@ -74,7 +61,7 @@ func (s *UserService) GetUser(id int) (User, error) {
 		return user, err
 	}
 
-	return user, err
+	return user, ErrProductNotFound
 }
 
 //CreateUser crea un usuario

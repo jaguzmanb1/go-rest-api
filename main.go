@@ -31,6 +31,7 @@ var (
 func main() {
 	db, err := sql.Open("mysql", ConnectionString)
 	l := log.New(os.Stdout, "products-api ", log.LstdFlags)
+	v := data.NewValidation()
 
 	if err != nil {
 		log.Fatal(err)
@@ -41,17 +42,21 @@ func main() {
 	us := &data.UserService{DB: db}
 
 	// Se crea el handler de usuario
-	uh := handlers.New(us, l)
+	uh := handlers.New(us, l, v)
 
 	// Se crea un serve mux que pueda registrar los handlers
 	sm := mux.NewRouter()
 
 	getRouter := sm.Methods(http.MethodGet).Subrouter()
 	getRouter.HandleFunc("/", uh.GetUsers)
+	getRouter.HandleFunc("/{id:[0-9]+}", uh.GetUser)
 
 	postRouter := sm.Methods(http.MethodPost).Subrouter()
 	postRouter.HandleFunc("/", uh.CreateUser)
 	postRouter.Use(uh.MiddlewareValidateUser)
+
+	delRouter := sm.Methods(http.MethodDelete).Subrouter()
+	delRouter.HandleFunc("/", uh.DeleteUser)
 
 	s := http.Server{
 		Addr:         os.Getenv("bindAddress"), // configure the bind address
