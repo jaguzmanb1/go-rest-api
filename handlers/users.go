@@ -1,9 +1,9 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"rest-api/data"
@@ -55,26 +55,16 @@ func (h *Users) GetUsers(w http.ResponseWriter, r *http.Request) {
 
 //CreateUser crear un usuario en la persistencia
 func (h *Users) CreateUser(w http.ResponseWriter, r *http.Request) {
-	h.l.Println("Handle GET Users")
+	h.l.Println("Handle POST Users")
 
-	var newUser data.User
-	reqBody, err := ioutil.ReadAll(r.Body)
-
-	if err != nil {
-		fmt.Fprint(w, "Insert a valid user")
-	}
-	json.Unmarshal(reqBody, &newUser)
-
-	if !(len(newUser.Name) > 0) {
-		fmt.Fprint(w, "El usuario necesita un nombre")
-		return
-	}
-
-	h.UserService.CreateUser(newUser)
+	user := r.Context().Value(KeyUser{}).(data.User)
+	h.UserService.CreateUser(user)
 }
 
 //DeleteUser obtiene un solo usuario con el id especificado
 func (h *Users) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	h.l.Println("Handle DELETE Users")
+
 	vars := mux.Vars(r)
 	userID, err := strconv.Atoi(vars["id"])
 
@@ -84,4 +74,28 @@ func (h *Users) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.UserService.DeleteUser(userID)
+}
+
+// KeyUser usada para el middleware
+type KeyUser struct{}
+
+//MiddlewareValidateUser  verificacion para los request
+func (h *Users) MiddlewareValidateUser(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		user := data.User{}
+
+		err := user.FromJSON(r.Body)
+		if err != nil {
+			h.l.Println("[ERROR] deserializing product", err)
+			http.Error(rw, "Error reading product", http.StatusBadRequest)
+			return
+		}
+
+		// add the product to the context
+		ctx := context.WithValue(r.Context(), KeyUser{}, user)
+		r = r.WithContext(ctx)
+
+		// Call the next handler, which can be another middleware in the chain, or the final handler.
+		next.ServeHTTP(rw, r)
+	})
 }

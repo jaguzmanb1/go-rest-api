@@ -49,6 +49,10 @@ func main() {
 	getRouter := sm.Methods(http.MethodGet).Subrouter()
 	getRouter.HandleFunc("/", uh.GetUsers)
 
+	postRouter := sm.Methods(http.MethodPost).Subrouter()
+	postRouter.HandleFunc("/", uh.CreateUser)
+	postRouter.Use(uh.MiddlewareValidateUser)
+
 	s := http.Server{
 		Addr:         os.Getenv("bindAddress"), // configure the bind address
 		Handler:      sm,                       // set the default handler
